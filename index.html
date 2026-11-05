@@ -70,4 +70,653 @@
             
             <!-- App Title & Subtitle -->
             <div class="flex items-center space-x-3">
-                <div class="p-2 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-5
+                <div class="p-2 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-500/30">
+                    <i data-lucide="globe" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white leading-tight">Plate Tectonics & Volcanism Explorer</h1>
+                    <p class="text-xs text-slate-400">HS Earth Science Virtual Investigation</p>
+                </div>
+            </div>
+
+            <!-- Inquiry Phase Stepper Controls -->
+            <div class="flex items-center bg-slate-900/80 p-1 rounded-xl border border-slate-700/80 shadow-inner">
+                <button id="btn-phase-1" onclick="setPhase(1)" class="phase-btn flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-amber-400 bg-slate-800 shadow-sm border border-slate-600">
+                    <span class="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 text-[10px] font-bold">1</span>
+                    <span class="hidden sm:inline">Volcanoes</span>
+                </button>
+                <div class="w-4 h-0.5 bg-slate-700"></div>
+                <button id="btn-phase-2" onclick="setPhase(2)" class="phase-btn flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-400 hover:text-slate-200">
+                    <span class="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold">2</span>
+                    <span class="hidden sm:inline">+ Plate Boundaries</span>
+                </button>
+                <div class="w-4 h-0.5 bg-slate-700"></div>
+                <button id="btn-phase-3" onclick="setPhase(3)" class="phase-btn flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-400 hover:text-slate-200">
+                    <span class="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold">3</span>
+                    <span class="hidden sm:inline">+ Earthquakes</span>
+                </button>
+            </div>
+
+            <!-- Header Action Toolbar -->
+            <div class="flex items-center space-x-2">
+                <!-- Base Map Selector -->
+                <div class="relative">
+                    <select id="basemap-select" onchange="changeBasemap(this.value)" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded-lg px-3 py-2 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+                        <option value="topo" selected>Esri Topographic (Default)</option>
+                        <option value="satellite">Esri Satellite Imagery</option>
+                        <option value="dark">Dark Canvas (High Contrast)</option>
+                        <option value="ocean">Esri Ocean Basemap</option>
+                    </select>
+                </div>
+
+                <!-- Toggle Inquiry Drawer Button -->
+                <button onclick="toggleDrawer()" class="flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-2 rounded-lg text-xs transition-colors shadow-sm">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span class="hidden md:inline">Investigation Guide</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Viewport Container -->
+    <div class="flex-1 relative flex overflow-hidden">
+
+        <!-- Map Container -->
+        <div id="map" class="w-full h-full z-0 bg-slate-950"></div>
+
+        <!-- Layer Toggle Quick Legend Floating Overlay (Top Left) -->
+        <div class="absolute top-4 left-4 z-10 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-xl max-w-xs">
+            <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>Active Layers</span>
+                <span id="current-phase-badge" class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">Phase 1</span>
+            </h2>
+            
+            <div class="space-y-2 text-xs">
+                <!-- Volcano Layer Control -->
+                <label class="flex items-center justify-between cursor-pointer group p-1 hover:bg-slate-800/50 rounded">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500 border border-amber-300 inline-block shadow-sm shadow-red-500/50"></span>
+                        <span class="text-slate-200 font-medium">Volcanoes (Active/Holocene)</span>
+                    </div>
+                    <input type="checkbox" id="layer-volcanoes" checked onchange="toggleLayer('volcanoes')" class="rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-900">
+                </label>
+
+                <!-- Tectonic Boundaries Layer Control -->
+                <label class="flex items-center justify-between cursor-pointer group p-1 hover:bg-slate-800/50 rounded">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3.5 h-1 bg-cyan-400 inline-block rounded-full shadow-sm"></span>
+                        <span class="text-slate-200 font-medium">Plate Boundaries</span>
+                    </div>
+                    <input type="checkbox" id="layer-plates" onchange="toggleLayer('plates')" class="rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-900">
+                </label>
+
+                <!-- Earthquakes Layer Control -->
+                <label class="flex items-center justify-between cursor-pointer group p-1 hover:bg-slate-800/50 rounded">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-purple-500 border border-purple-300 inline-block shadow-sm"></span>
+                        <span class="text-slate-200 font-medium">Earthquakes (M4.5+ Recent)</span>
+                    </div>
+                    <input type="checkbox" id="layer-earthquakes" onchange="toggleLayer('earthquakes')" class="rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-slate-900">
+                </label>
+            </div>
+
+            <!-- Tectonic Boundary Legend Detail (Shows when boundaries active) -->
+            <div id="boundary-legend-detail" class="mt-3 pt-2 border-t border-slate-800 hidden text-[11px] space-y-1.5 text-slate-400">
+                <div class="font-semibold text-slate-300 mb-1">Boundary Types:</div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-1 bg-red-500 rounded"></span>
+                    <span>Convergent (Subduction/Collision)</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-1 bg-cyan-400 rounded"></span>
+                    <span>Divergent (Spreading Ridge)</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-1 bg-yellow-400 rounded"></span>
+                    <span>Transform (Strike-Slip)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guided Inquiry Side Panel (Collapsible Drawer) -->
+        <div id="inquiry-drawer" class="drawer-panel absolute right-0 top-0 bottom-0 w-full sm:w-96 bg-slate-900/95 backdrop-blur-md border-l border-slate-700/80 z-20 transition-transform duration-300 transform translate-x-0 flex flex-col shadow-2xl">
+            
+            <!-- Drawer Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/50">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="compass" class="w-5 h-5 text-amber-400"></i>
+                    <h2 class="font-bold text-slate-200 text-sm">Student Guided Inquiry</h2>
+                </div>
+                <button onclick="toggleDrawer()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700/50 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Drawer Dynamic Content -->
+            <div class="p-5 overflow-y-auto flex-1 space-y-6 text-sm text-slate-300">
+                
+                <!-- Dynamic Inquiry Card -->
+                <div id="inquiry-card" class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 space-y-3">
+                    <!-- Javascript populates content here based on Phase -->
+                </div>
+
+                <!-- Interactive Student Notes Field -->
+                <div class="space-y-2">
+                    <label for="student-notes" class="font-semibold text-slate-200 flex items-center space-x-1.5 text-xs">
+                        <i data-lucide="file-edit" class="w-4 h-4 text-amber-400"></i>
+                        <span>Investigation Log & Observations:</span>
+                    </label>
+                    <textarea id="student-notes" rows="6" placeholder="Type your observations and answers to the prompts here. Your notes auto-save locally during this session..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none leading-relaxed"></textarea>
+                    <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                        <span id="save-status">Auto-saved to session</span>
+                        <button onclick="clearNotes()" class="text-slate-400 hover:text-amber-400 underline">Clear notes</button>
+                    </div>
+                </div>
+
+                <!-- Teacher / Curriculum Standard Quick Note -->
+                <div class="border-t border-slate-800 pt-4 text-xs text-slate-500 space-y-1">
+                    <div class="font-semibold text-slate-400 flex items-center space-x-1">
+                        <i data-lucide="award" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span>NGSS Alignment</span>
+                    </div>
+                    <p><strong>HS-ESS1-5:</strong> Evaluate evidence of plate tectonics and continental drift to reconstruct Earth history.</p>
+                    <p><strong>HS-ESS2-1:</strong> Develop a model to illustrate how Earth's internal and surface processes operate across spatial & temporal scales.</p>
+                </div>
+
+            </div>
+
+            <!-- Drawer Footer Action -->
+            <div class="p-4 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between">
+                <button id="prev-phase-btn" onclick="stepPhase(-1)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed flex items-center space-x-1">
+                    <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                    <span>Previous</span>
+                </button>
+                <span id="drawer-phase-step" class="text-xs font-bold text-amber-400">Phase 1 of 3</span>
+                <button id="next-phase-btn" onclick="stepPhase(1)" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg text-xs font-bold flex items-center space-x-1 shadow-sm">
+                    <span>Next Phase</span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Application Logic Script -->
+    <script>
+        // Global State Management
+        let map;
+        let currentPhase = 1;
+        let layers = {
+            volcanoes: null,
+            plates: null,
+            earthquakes: null
+        };
+        let tileLayers = {};
+
+        // Phase Guidance Data Definitions
+        const phaseGuides = {
+            1: {
+                title: "Phase 1: Geographic Distribution of Volcanoes",
+                badge: "Phase 1: Observation",
+                subtitle: "Observe global patterns without boundaries or other data.",
+                prompts: [
+                    "Examine the red volcanic markers across the globe. Are volcanoes distributed randomly, or do they form distinct belts?",
+                    "Identify the massive ring-shaped arrangement surrounding the Pacific Ocean. What is this famous geological feature called?",
+                    "Look for isolated clusters of volcanoes in the middle of oceans (e.g., the Hawaiian chain). How might these differ from coastal lines?"
+                ],
+                recommendedLayers: { volcanoes: true, plates: false, earthquakes: false }
+            },
+            2: {
+                title: "Phase 2: Overlapping Plate Tectonic Boundaries",
+                badge: "Phase 2: Plate Alignment",
+                subtitle: "Analyze how tectonic boundaries correspond with volcanic activity.",
+                prompts: [
+                    "Observe where the colored boundary lines fall relative to the red volcano icons.",
+                    "Which type of boundary line (Red = Convergent, Cyan = Divergent, Yellow = Transform) has the highest concentration of explosive volcanoes?",
+                    "Compare the Mid-Atlantic Ridge (cyan line down the Atlantic Ocean) with the western coast of South America (red line). What differences do you notice in volcanic density?"
+                ],
+                recommendedLayers: { volcanoes: true, plates: true, earthquakes: false }
+            },
+            3: {
+                title: "Phase 3: Integrating Seismic Activity (Earthquakes)",
+                badge: "Phase 3: Full Synthesis",
+                subtitle: "Combine Earth's major dynamic systems: Volcanoes, Plates, and Seismic energy.",
+                prompts: [
+                    "Where do earthquake epicenters (purple rings) occur compared to tectonic boundaries and volcanoes?",
+                    "Do earthquakes occur along all plate boundary types, or primarily specific ones?",
+                    "Synthesis Question: How does plate tectonic theory explain why volcanoes, earthquakes, and deep ocean trenches occur in the exact same geographic locations?"
+                ],
+                recommendedLayers: { volcanoes: true, plates: true, earthquakes: true }
+            }
+        };
+
+        // Standardized Global Tectonic Plate Boundary Datasets (Hugo Ahlenius / GISCO / USGS)
+        // Authentic geoJSON high-precision plate outlines
+        const TECTONIC_PLATES_GEOJSON_URL = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json";
+        
+        // Smithsonian / USGS Global Volcanism Program Dataset Sample (Holocene Volcanoes)
+        const VOLCANOES_DATA = [
+            // Pacific Ring of Fire - Americas
+            { name: "Mount St. Helens", country: "United States", type: "Stratovolcano", elevation: 2549, lat: 46.1914, lng: -122.1956 },
+            { name: "Mount Rainier", country: "United States", type: "Stratovolcano", elevation: 4392, lat: 46.8523, lng: -121.7603 },
+            { name: "Mount Shasta", country: "United States", type: "Stratovolcano", elevation: 4317, lat: 41.4092, lng: -122.1949 },
+            { name: "Popocatépetl", country: "Mexico", type: "Stratovolcano", elevation: 5426, lat: 19.0225, lng: -98.6278 },
+            { name: "Colima", country: "Mexico", type: "Stratovolcano", elevation: 3820, lat: 19.5120, lng: -103.6170 },
+            { name: "Fuego", country: "Guatemala", type: "Stratovolcano", elevation: 3763, lat: 14.4730, lng: -90.8800 },
+            { name: "Cotopaxi", country: "Ecuador", type: "Stratovolcano", elevation: 5897, lat: -0.6770, lng: -78.4360 },
+            { name: "Galeras", country: "Colombia", type: "Stratovolcano", elevation: 4276, lat: 1.2200, lng: -77.3580 },
+            { name: "Villarrica", country: "Chile", type: "Stratovolcano", elevation: 2847, lat: -39.4200, lng: -71.9300 },
+            { name: "Nevado del Ruiz", country: "Colombia", type: "Stratovolcano", elevation: 5321, lat: 4.8920, lng: -75.3240 },
+
+            // Ring of Fire - Asia & West Pacific
+            { name: "Fuji", country: "Japan", type: "Stratovolcano", elevation: 3776, lat: 35.3606, lng: 138.7274 },
+            { name: "Sakurajima", country: "Japan", type: "Caldera", elevation: 1117, lat: 31.5930, lng: 130.6570 },
+            { name: "Mount Pinatubo", country: "Philippines", type: "Stratovolcano", elevation: 1486, lat: 15.1429, lng: 120.3500 },
+            { name: "Mayon", country: "Philippines", type: "Stratovolcano", elevation: 2463, lat: 13.2570, lng: 123.6850 },
+            { name: "Krakatoa", country: "Indonesia", type: "Caldera", elevation: 813, lat: -6.1020, lng: 105.4230 },
+            { name: "Mount Merapi", country: "Indonesia", type: "Stratovolcano", elevation: 2910, lat: -7.5400, lng: 110.4460 },
+            { name: "Mount Tambora", country: "Indonesia", type: "Stratovolcano", elevation: 2850, lat: -8.2500, lng: 117.9900 },
+            { name: "Taupo", country: "New Zealand", type: "Supervolcano", elevation: 357, lat: -38.8060, lng: 175.9000 },
+            { name: "White Island (Whakaari)", country: "New Zealand", type: "Stratovolcano", elevation: 321, lat: -37.5200, lng: 177.1800 },
+            { name: "Klyuchevskoy", country: "Russia (Kamchatka)", type: "Stratovolcano", elevation: 4750, lat: 56.0570, lng: 160.6380 },
+
+            // Oceanic Hotspots & Divergent Ridges
+            { name: "Kilauea", country: "United States (Hawaii)", type: "Shield Volcano", elevation: 1247, lat: 19.4210, lng: -155.2870 },
+            { name: "Mauna Loa", country: "United States (Hawaii)", type: "Shield Volcano", elevation: 4169, lat: 19.4750, lng: -155.6080 },
+            { name: "Eyjafjallajökull", country: "Iceland", type: "Stratovolcano", elevation: 1666, lat: 63.6300, lng: -19.6200 },
+            { name: "Fagradalsfjall", country: "Iceland", type: "Shield Volcano", elevation: 385, lat: 63.9030, lng: -22.2730 },
+            { name: "Pit Saint Denis (Piton de la Fournaise)", country: "Reunion (French)", type: "Shield Volcano", elevation: 2632, lat: -21.2440, lng: 55.7080 },
+
+            // Mediterranean & Rift Systems
+            { name: "Mount Etna", country: "Italy", type: "Stratovolcano", elevation: 3357, lat: 37.7510, lng: 14.9930 },
+            { name: "Mount Vesuvius", country: "Italy", type: "Complex Volcano", elevation: 1281, lat: 40.8210, lng: 14.4260 },
+            { name: "Stromboli", country: "Italy", type: "Stratovolcano", elevation: 926, lat: 38.7890, lng: 15.2130 },
+            { name: "Erta Ale", country: "Ethiopia", type: "Shield Volcano", elevation: 613, lat: 13.6000, lng: 40.6700 },
+            { name: "Mount Nyiragongo", country: "DR Congo", type: "Stratovolcano", elevation: 3470, lat: -1.5200, lng: 29.2500 },
+            
+            // Antarctica
+            { name: "Mount Erebus", country: "Antarctica", type: "Stratovolcano", elevation: 3794, lat: -77.5300, lng: 167.1700 }
+        ];
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', () => {
+            // Render Lucide SVG Icons
+            lucide.createIcons();
+
+            // Initialize Map
+            initMap();
+
+            // Load Student Saved Notes
+            loadNotes();
+
+            // Set Initial Phase
+            setPhase(1);
+        });
+
+        function initMap() {
+            // Leaflet Map Initialization centered globally
+            map = L.map('map', {
+                center: [20, 10],
+                zoom: 2.5,
+                minZoom: 2,
+                maxZoom: 18,
+                zoomControl: false
+            });
+
+            // Add Custom Position Zoom Controls
+            L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+            // Define Tile Layers
+            tileLayers = {
+                topo: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), swisstopo, MapmyIndia, &copy; OpenStreetMap contributors',
+                    maxZoom: 18
+                }),
+                dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    subdomains: 'abcd',
+                    maxZoom: 19
+                }),
+                satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                    maxZoom: 18
+                }),
+                ocean: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUSB',
+                    maxZoom: 13
+                })
+            };
+
+            // Set Default Tile Layer (Esri Topographic)
+            tileLayers.topo.addTo(map);
+
+            // Create Layer Groups
+            layers.volcanoes = L.layerGroup();
+            layers.plates = L.layerGroup();
+            layers.earthquakes = L.layerGroup();
+
+            // Build Layer Datasets
+            buildVolcanoLayer();
+            fetchPlateBoundaries();
+            fetchEarthquakeData();
+        }
+
+        // Change Active Tile Layer
+        function changeBasemap(key) {
+            Object.keys(tileLayers).forEach(k => {
+                if (map.hasLayer(tileLayers[k])) {
+                    map.removeLayer(tileLayers[k]);
+                }
+            });
+            if (tileLayers[key]) {
+                tileLayers[key].addTo(map);
+            }
+        }
+
+        // Construct Volcano Layer
+        function buildVolcanoLayer() {
+            VOLCANOES_DATA.forEach(volcano => {
+                const marker = L.circleMarker([volcano.lat, volcano.lng], {
+                    radius: 6,
+                    fillColor: '#ef4444',
+                    color: '#fef08a',
+                    weight: 1.5,
+                    opacity: 0.9,
+                    fillOpacity: 0.85
+                });
+
+                const popupContent = `
+                    <div class="p-1 text-slate-800">
+                        <div class="flex items-center space-x-1.5 text-red-600 font-bold text-xs uppercase tracking-wide">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 0 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6Z"/></svg>
+                            <span>Volcano</span>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-900 mt-0.5">${volcano.name}</h3>
+                        <div class="text-xs text-slate-600 mt-1 space-y-0.5">
+                            <div><strong>Country:</strong> ${volcano.country}</div>
+                            <div><strong>Type:</strong> ${volcano.type}</div>
+                            <div><strong>Elevation:</strong> ${volcano.elevation.toLocaleString()} meters</div>
+                            <div><strong>Coordinates:</strong> ${volcano.lat.toFixed(2)}°, ${volcano.lng.toFixed(2)}°</div>
+                        </div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent, { className: 'custom-leaflet-popup' });
+                layers.volcanoes.addLayer(marker);
+            });
+        }
+
+        // Fetch Authentic Tectonic Boundaries (GeoJSON)
+        function fetchPlateBoundaries() {
+            fetch(TECTONIC_PLATES_GEOJSON_URL)
+                .then(res => res.json())
+                .then(data => {
+                    const plateGeoJson = L.geoJSON(data, {
+                        style: function(feature) {
+                            // Classify styles based on boundary type code
+                            // CC: Convergent, CT: Transform, CC: Continental, Ridge/Divergent
+                            const code = feature.properties ? feature.properties.LAYER : '';
+                            
+                            if (code === 'Subduction' || code === 'Convergent' || code === 'Step') {
+                                return { color: '#ef4444', weight: 3, opacity: 0.85 }; // Convergent = Red
+                            } else if (code === 'Transform' || code === 'Transform Fault') {
+                                return { color: '#eab308', weight: 2.5, opacity: 0.8, dashArray: '4, 4' }; // Transform = Yellow
+                            } else {
+                                return { color: '#22d3ee', weight: 2.5, opacity: 0.85 }; // Divergent / Ridge = Cyan
+                            }
+                        },
+                        onEachFeature: function(feature, layer) {
+                            if (feature.properties) {
+                                const name = feature.properties.Name || feature.properties.LAYER || "Tectonic Boundary";
+                                layer.bindTooltip(`Boundary: <strong>${name}</strong>`, { sticky: true });
+                            }
+                        }
+                    });
+
+                    layers.plates.addLayer(plateGeoJson);
+                })
+                .catch(err => {
+                    console.warn("Could not load online GeoJSON plate boundaries, placing fallback lines.", err);
+                    drawFallbackPlateBoundaries();
+                });
+        }
+
+        // Fallback Simplified Plate Lines if offline or CORS fails
+        function drawFallbackPlateBoundaries() {
+            const fallbackLines = [
+                // Pacific Ring Convergent
+                { type: 'Convergent', coords: [[60, -150], [52, -170], [45, 150], [30, 140], [10, 126], [-10, 120], [-20, 175], [-40, 175]] },
+                // Nazca / South America Convergent
+                { type: 'Convergent', coords: [[10, -75], [-10, -78], [-35, -73], [-55, -70]] },
+                // Mid-Atlantic Divergent
+                { type: 'Divergent', coords: [[80, -10], [65, -18], [25, -45], [0, -15], [-30, -14], [-54, -20]] },
+                // East Pacific Rise Divergent
+                { type: 'Divergent', coords: [[20, -108], [-10, -110], [-35, -110], [-55, -120]] },
+                // San Andreas Transform
+                { type: 'Transform', coords: [[40, -124], [34, -118], [23, -109]] }
+            ];
+
+            fallbackLines.forEach(line => {
+                const color = line.type === 'Convergent' ? '#ef4444' : line.type === 'Transform' ? '#eab308' : '#22d3ee';
+                const poly = L.polyline(line.coords, {
+                    color: color,
+                    weight: 3,
+                    opacity: 0.8,
+                    dashArray: line.type === 'Transform' ? '4,4' : null
+                });
+                poly.bindTooltip(`Tectonic Boundary (${line.type})`);
+                layers.plates.addLayer(poly);
+            });
+        }
+
+        // Fetch Live/Recent Earthquakes (USGS API M4.5+ last 30 days)
+        function fetchEarthquakeData() {
+            const USGS_EQ_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_month.geojson";
+
+            fetch(USGS_EQ_URL)
+                .then(res => res.json())
+                .then(data => {
+                    data.features.forEach(eq => {
+                        const [lng, lat, depth] = eq.geometry.coordinates;
+                        const mag = eq.properties.mag;
+                        const place = eq.properties.place;
+                        const time = new Date(eq.properties.time).toLocaleDateString();
+
+                        // Dynamic radius based on magnitude
+                        const radius = Math.max(3, mag * 1.8);
+
+                        const marker = L.circleMarker([lat, lng], {
+                            radius: radius,
+                            fillColor: '#a855f7', // Purple
+                            color: '#e9d5ff',
+                            weight: 1,
+                            opacity: 0.8,
+                            fillOpacity: 0.6,
+                            className: mag >= 6.0 ? 'pulse-marker' : ''
+                        });
+
+                        const popupContent = `
+                            <div class="p-1 text-slate-800">
+                                <div class="flex items-center space-x-1.5 text-purple-700 font-bold text-xs uppercase tracking-wide">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                                    <span>Earthquake Epicenter</span>
+                                </div>
+                                <h3 class="font-bold text-sm text-slate-900 mt-0.5">Magnitude ${mag.toFixed(1)}</h3>
+                                <div class="text-xs text-slate-600 mt-1 space-y-0.5">
+                                    <div><strong>Location:</strong> ${place}</div>
+                                    <div><strong>Depth:</strong> ${depth} km</div>
+                                    <div><strong>Date:</strong> ${time}</div>
+                                    <div><strong>Coordinates:</strong> ${lat.toFixed(2)}°, ${lng.toFixed(2)}°</div>
+                                </div>
+                            </div>
+                        `;
+
+                        marker.bindPopup(popupContent, { className: 'custom-leaflet-popup' });
+                        layers.earthquakes.addLayer(marker);
+                    });
+                })
+                .catch(err => {
+                    console.warn("USGS live earthquake feed unavailable, generating sample seismic points.", err);
+                    generateFallbackEarthquakes();
+                });
+        }
+
+        // Fallback seismic points if external USGS fetch fails
+        function generateFallbackEarthquakes() {
+            const sampleEqs = [
+                { lat: 36.2, lng: 139.1, mag: 5.8, depth: 35, place: "Honshu, Japan" },
+                { lat: -17.5, lng: -178.2, mag: 6.2, depth: 540, place: "Fiji Region" },
+                { lat: -33.4, lng: -71.6, mag: 5.4, depth: 42, place: "Off Coast of Valparaiso, Chile" },
+                { lat: 61.2, lng: -149.9, mag: 4.9, depth: 20, place: "Southern Alaska" },
+                { lat: 38.2, lng: 15.6, mag: 4.6, depth: 10, place: "Southern Italy" },
+                { lat: -6.2, lng: 105.2, mag: 5.5, depth: 60, place: "Sunda Strait, Indonesia" }
+            ];
+
+            sampleEqs.forEach(eq => {
+                const marker = L.circleMarker([eq.lat, eq.lng], {
+                    radius: eq.mag * 1.8,
+                    fillColor: '#a855f7',
+                    color: '#e9d5ff',
+                    weight: 1,
+                    opacity: 0.8,
+                    fillOpacity: 0.6
+                });
+                marker.bindPopup(`<b>Magnitude ${eq.mag}</b><br>${eq.place}<br>Depth: ${eq.depth} km`);
+                layers.earthquakes.addLayer(marker);
+            });
+        }
+
+        // Set Inquiry Phase & Synchronize Map Layers
+        function setPhase(phaseNum) {
+            currentPhase = phaseNum;
+            const config = phaseGuides[phaseNum];
+
+            // Update Header Stepper UI
+            for (let i = 1; i <= 3; i++) {
+                const btn = document.getElementById(`btn-phase-${i}`);
+                if (i === phaseNum) {
+                    btn.className = "phase-btn flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-amber-400 bg-slate-800 shadow-sm border border-slate-600";
+                    btn.querySelector('span:first-child').className = "w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 text-[10px] font-bold";
+                } else {
+                    btn.className = "phase-btn flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-slate-400 hover:text-slate-200";
+                    btn.querySelector('span:first-child').className = "w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold";
+                }
+            }
+
+            // Sync Map Layers to Phase Defaults
+            applyLayerVisibility('volcanoes', config.recommendedLayers.volcanoes);
+            applyLayerVisibility('plates', config.recommendedLayers.plates);
+            applyLayerVisibility('earthquakes', config.recommendedLayers.earthquakes);
+
+            // Synchronize Checkbox UIs
+            document.getElementById('layer-volcanoes').checked = config.recommendedLayers.volcanoes;
+            document.getElementById('layer-plates').checked = config.recommendedLayers.plates;
+            document.getElementById('layer-earthquakes').checked = config.recommendedLayers.earthquakes;
+
+            // Toggle Legend Sub-Detail
+            const legendDetail = document.getElementById('boundary-legend-detail');
+            if (config.recommendedLayers.plates) {
+                legendDetail.classList.remove('hidden');
+            } else {
+                legendDetail.classList.add('hidden');
+            }
+
+            // Update Drawer Badge & Footer Controls
+            document.getElementById('current-phase-badge').innerText = `Phase ${phaseNum}`;
+            document.getElementById('drawer-phase-step').innerText = `Phase ${phaseNum} of 3`;
+            
+            document.getElementById('prev-phase-btn').disabled = (phaseNum === 1);
+            document.getElementById('next-phase-btn').disabled = (phaseNum === 3);
+
+            // Populate Drawer Inquiry Card
+            const cardHtml = `
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">${config.badge}</span>
+                    <span class="text-xs text-slate-400">Step ${phaseNum}</span>
+                </div>
+                <h3 class="font-bold text-slate-100 text-base leading-snug">${config.title}</h3>
+                <p class="text-xs text-slate-400 italic">${config.subtitle}</p>
+                
+                <div class="space-y-2 pt-2 border-t border-slate-700/60">
+                    <div class="font-semibold text-xs text-slate-200 uppercase tracking-wider">Inquiry Questions:</div>
+                    <ul class="space-y-2 text-xs text-slate-300 list-disc pl-4 leading-relaxed">
+                        ${config.prompts.map(p => `<li>${p}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            document.getElementById('inquiry-card').innerHTML = cardHtml;
+        }
+
+        // Helper to Toggle Layer on Map
+        function applyLayerVisibility(layerKey, isVisible) {
+            if (isVisible) {
+                if (!map.hasLayer(layers[layerKey])) {
+                    map.addLayer(layers[layerKey]);
+                }
+            } else {
+                if (map.hasLayer(layers[layerKey])) {
+                    map.removeLayer(layers[layerKey]);
+                }
+            }
+        }
+
+        // Manual Checkbox Layer Control Handler
+        function toggleLayer(layerKey) {
+            const isChecked = document.getElementById(`layer-${layerKey}`).checked;
+            applyLayerVisibility(layerKey, isChecked);
+
+            if (layerKey === 'plates') {
+                const legendDetail = document.getElementById('boundary-legend-detail');
+                if (isChecked) {
+                    legendDetail.classList.remove('hidden');
+                } else {
+                    legendDetail.classList.add('hidden');
+                }
+            }
+        }
+
+        // Step Phase via Prev/Next Buttons
+        function stepPhase(delta) {
+            const targetPhase = currentPhase + delta;
+            if (targetPhase >= 1 && targetPhase <= 3) {
+                setPhase(targetPhase);
+            }
+        }
+
+        // Toggle Drawer Visibility
+        function toggleDrawer() {
+            const drawer = document.getElementById('inquiry-drawer');
+            drawer.classList.toggle('translate-x-full');
+        }
+
+        // Local Storage Auto-Save for Student Notes
+        const notesTextarea = document.getElementById('student-notes');
+        const saveStatus = document.getElementById('save-status');
+
+        notesTextarea.addEventListener('input', () => {
+            localStorage.setItem('hs_earth_sci_volcano_notes', notesTextarea.value);
+            saveStatus.innerText = "Saving...";
+            setTimeout(() => {
+                saveStatus.innerText = "Auto-saved to session";
+            }, 600);
+        });
+
+        function loadNotes() {
+            const saved = localStorage.getItem('hs_earth_sci_volcano_notes');
+            if (saved) {
+                notesTextarea.value = saved;
+            }
+        }
+
+        function clearNotes() {
+            if (confirm("Are you sure you want to clear your inquiry notes?")) {
+                notesTextarea.value = '';
+                localStorage.removeItem('hs_earth_sci_volcano_notes');
+                saveStatus.innerText = "Notes cleared";
+            }
+        }
+    </script>
+</body>
+</html>
