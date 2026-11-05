@@ -1,350 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Earth Science: Volcanoes, Plate Tectonics & Earthquakes</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  
-  <!-- Font Awesome for Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earth Science Interactive Map: Plate Tectonics, Volcanoes & Earthquakes</title>
 
-  <style>
-    /* Custom scrollbar for control panels */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.6);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(100, 116, 139, 0.5);
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(148, 163, 184, 0.8);
-    }
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    /* Leaflet customization for dark theme integration */
-    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-      background-color: #0f172a !important; /* Slate 900 */
-      color: #f8fafc !important; /* Slate 50 */
-      border: 1px solid #334155;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-    }
-    .leaflet-container {
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: #090d16;
-    }
-    
-    /* Custom pulsing animation for active hotspots */
-    @keyframes pulse-glow {
-      0%, 100% { transform: scale(1); opacity: 0.9; }
-      50% { transform: scale(1.15); opacity: 1; }
-    }
-    .pulse-marker {
-      animation: pulse-glow 2s infinite ease-in-out;
-    }
-  </style>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom scrollbar for drawer */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Pulse animation for earthquake markers */
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.3;
+            }
+            100% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+        }
+        .pulse-marker {
+            animation: pulse-ring 2.5s infinite ease-in-out;
+        }
+
+        .leaflet-container {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        /* Responsive layout tweaks */
+        @media (max-width: 768px) {
+            .drawer-panel {
+                max-height: 50vh;
+            }
+        }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans antialiased">
+<body class="bg-slate-900 text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans">
 
-  <!-- Top Header / Navigation Bar -->
-  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-2.5 flex items-center justify-between z-20 shadow-md shrink-0">
-    <div class="flex items-center space-x-3">
-      <div class="bg-gradient-to-tr from-amber-600 to-red-600 p-2 rounded-lg text-white shadow-lg shadow-red-950/50">
-        <i class="fa-solid font-bold fa-volcano text-lg"></i>
-      </div>
-      <div>
-        <h1 class="text-base sm:text-lg font-bold bg-gradient-to-r from-red-400 via-amber-300 to-yellow-400 bg-clip-text text-transparent">
-          Plate Tectonics & Seismic Activity Explorer
-        </h1>
-        <p class="text-xs text-slate-400 hidden sm:block">Interactive High School Earth Science Inquiry Lab</p>
-      </div>
-    </div>
-
-    <!-- Right Header Actions -->
-    <div class="flex items-center space-x-2">
-      <!-- Toggle Guided Lab Drawer Button -->
-      <button id="toggle-drawer-btn" class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium px-3 py-1.5 rounded-md transition-all shadow-md hover:shadow-indigo-900/40 border border-indigo-400/30">
-        <i class="fa-solid fa-clipboard-question"></i>
-        <span class="hidden md:inline">Guided Student Inquiry</span>
-      </button>
-      
-      <!-- Base Map Switcher -->
-      <div class="relative">
-        <select id="base-map-select" class="bg-slate-800 text-slate-200 text-xs sm:text-sm rounded-md border border-slate-700 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
-          <option value="topo" selected>Esri Topographic (Default)</option>
-          <option value="dark">Carto Dark</option>
-          <option value="imagery">Esri World Satellite</option>
-        </select>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Content Layout (Map + Overlay Controls + Collapsible Drawer) -->
-  <div class="relative flex-1 w-full h-full overflow-hidden flex">
-
-    <!-- Leaflet Map Canvas -->
-    <div id="map" class="w-full h-full z-0"></div>
-
-    <!-- Floating Layer Controls Panel (Top Left) -->
-    <div class="absolute top-4 left-4 z-10 w-72 sm:w-80 bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-800 p-4 shadow-2xl text-xs sm:text-sm">
-      <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
-        <span class="font-bold uppercase tracking-wider text-slate-300 text-xs flex items-center gap-1.5">
-          <i class="fa-solid fa-layer-group text-amber-400"></i> Map Layer Controls
-        </span>
-        <span id="boundary-status" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">Canvas Lab</span>
-      </div>
-
-      <div class="space-y-2.5">
-        <!-- Phase 1: Volcanoes Toggle -->
-        <label class="flex items-center justify-between p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/60 hover:bg-slate-800 transition cursor-pointer">
-          <div class="flex items-center space-x-2.5">
-            <span class="w-3 h-3 rounded-full bg-red-500 ring-2 ring-red-400/30 inline-block"></span>
-            <div>
-              <div class="font-semibold text-slate-200">Phase 1: Volcanoes</div>
-              <div class="text-[11px] text-slate-400">Active & Major Global Volcanoes</div>
-            </div>
-          </div>
-          <input type="checkbox" id="layer-volcanoes" checked class="w-4 h-4 rounded text-red-600 focus:ring-red-500 bg-slate-900 border-slate-700">
-        </label>
-
-        <!-- Phase 2: Plate Boundaries Toggle -->
-        <label class="flex items-center justify-between p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/60 hover:bg-slate-800 transition cursor-pointer">
-          <div class="flex items-center space-x-2.5">
-            <span class="w-3.5 h-1 bg-amber-400 inline-block rounded-full"></span>
-            <div>
-              <div class="font-semibold text-slate-200">Phase 2: Tectonic Plates</div>
-              <div class="text-[11px] text-slate-400">Divergent, Convergent & Transform</div>
-            </div>
-          </div>
-          <input type="checkbox" id="layer-plates" class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700">
-        </label>
-
-        <!-- Phase 3: Earthquakes Toggle -->
-        <label class="flex items-center justify-between p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/60 hover:bg-slate-800 transition cursor-pointer">
-          <div class="flex items-center space-x-2.5">
-            <span class="w-3 h-3 rounded-full bg-teal-400 border border-teal-200 inline-block"></span>
-            <div>
-              <div class="font-semibold text-slate-200">Phase 3: Earthquakes</div>
-              <div class="text-[11px] text-slate-400">USGS Recent Significant Quakes</div>
-            </div>
-          </div>
-          <input type="checkbox" id="layer-earthquakes" class="w-4 h-4 rounded text-teal-500 focus:ring-teal-500 bg-slate-900 border-slate-700">
-        </label>
-      </div>
-
-      <!-- Quick Reset Button -->
-      <button id="reset-view-btn" class="w-full mt-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-xs flex items-center justify-center gap-2 transition">
-        <i class="fa-solid fa-arrows-to-eye"></i> Reset Global Map View
-      </button>
-    </div>
-
-    <!-- Map Legend (Bottom Left) -->
-    <div id="map-legend" class="absolute bottom-6 left-4 z-10 w-72 sm:w-80 bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-800 p-3.5 shadow-2xl text-xs">
-      <div class="font-bold text-slate-300 mb-2 flex items-center gap-1.5 border-b border-slate-800 pb-1">
-        <i class="fa-solid fa-list text-indigo-400"></i> Map Key & Legend
-      </div>
-      
-      <!-- Volcano Legend -->
-      <div class="space-y-1.5 mb-2">
-        <div class="text-[11px] font-semibold text-slate-400">Volcanoes</div>
-        <div class="flex items-center justify-between text-slate-300 text-[11px]">
-          <span class="flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-red-500"></i> Active Volcano</span>
-          <span class="flex items-center gap-1.5"><i class="fa-solid fa-fire text-amber-500"></i> Hotspot / Rift</span>
-        </div>
-      </div>
-
-      <!-- Boundaries Legend -->
-      <div id="legend-boundaries" class="space-y-1 mb-2 pt-1 border-t border-slate-800/80">
-        <div class="text-[11px] font-semibold text-slate-400">Tectonic Boundary Types</div>
-        <div class="grid grid-cols-1 gap-1 text-[11px]">
-          <div class="flex items-center gap-2">
-            <span class="w-4 h-0.5 bg-red-500 inline-block"></span>
-            <span class="text-slate-300">Convergent (Subduction Zones)</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-4 h-0.5 bg-cyan-400 inline-block"></span>
-            <span class="text-slate-300">Divergent (Spreading Centers)</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-4 h-0.5 bg-yellow-400 inline-block"></span>
-            <span class="text-slate-300">Transform (Strike-Slip)</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Earthquake Legend -->
-      <div id="legend-earthquakes" class="space-y-1 pt-1 border-t border-slate-800/80">
-        <div class="text-[11px] font-semibold text-slate-400">Earthquake Magnitude & Depth</div>
-        <div class="flex items-center justify-between text-[11px] text-slate-300">
-          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-teal-400"></span> Mag 3.0+</span>
-          <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 rounded-full bg-amber-400"></span> Mag 5.0+</span>
-          <span class="flex items-center gap-1"><span class="w-5 h-5 rounded-full bg-purple-500"></span> Mag 7.0+</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Student Inquiry Panel / Guided Worksheet Drawer (Right Side) -->
-    <aside id="inquiry-drawer" class="absolute top-0 right-0 h-full w-full sm:w-96 bg-slate-900/95 backdrop-blur-lg border-l border-slate-800 z-30 transform translate-x-0 transition-transform duration-300 ease-in-out flex flex-col shadow-2xl">
-      <!-- Drawer Header -->
-      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
-        <div class="flex items-center space-x-2">
-          <i class="fa-solid fa-lightbulb text-amber-400 text-lg"></i>
-          <h2 class="font-bold text-slate-200 text-base">Guided Inquiry Worksheet</h2>
-        </div>
-        <button id="close-drawer-btn" class="text-slate-400 hover:text-slate-100 p-1 rounded-lg hover:bg-slate-800 transition">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <!-- Drawer Scrollable Content -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-6 text-xs sm:text-sm text-slate-300">
-        
-        <!-- Lab Overview Banner -->
-        <div class="bg-indigo-950/40 border border-indigo-800/40 rounded-xl p-3 text-indigo-200">
-          <p class="font-semibold text-indigo-300 text-xs mb-1">Objective:</p>
-          <p class="text-xs leading-relaxed">Investigate how spatial patterns of active volcanoes, earthquake epicenters, and tectonic plate boundaries relate to global plate tectonics.</p>
-        </div>
-
-        <!-- Phase 1 Inquiry Section -->
-        <div class="space-y-2 border-l-2 border-red-500 pl-3 py-1">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-red-400 text-xs uppercase tracking-wide">Phase 1: Volcano Distribution</span>
-            <button id="btn-goto-phase1" class="text-[11px] text-red-300 hover:text-red-200 bg-red-950/60 px-2 py-0.5 rounded border border-red-800">Focus Phase 1</button>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            1. Look at the map with <strong>Volcanoes</strong> enabled.<br>
-            2. Notice the heavy concentration around the Pacific Ocean perimeter. What famous feature does this form?<br>
-            3. Click on <strong>Mount Fuji</strong>, <strong>Kilauea</strong>, and <strong>Eyjafjallajökull</strong>. Compare their tectonic settings.
-          </p>
-        </div>
-
-        <!-- Phase 2 Inquiry Section -->
-        <div class="space-y-2 border-l-2 border-amber-500 pl-3 py-1">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-amber-400 text-xs uppercase tracking-wide">Phase 2: Add Tectonic Boundaries</span>
-            <button id="btn-goto-phase2" class="text-[11px] text-amber-300 hover:text-amber-200 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800">Focus Phase 2</button>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            1. Turn on the <strong>Tectonic Plate Layer</strong>.<br>
-            2. How closely do active volcanoes align with red lines (Convergent / Subduction boundaries)?<br>
-            3. Are there volcanoes in the middle of plates away from boundaries (e.g., Hawaii)? What causes these?
-          </p>
-        </div>
-
-        <!-- Phase 3 Inquiry Section -->
-        <div class="space-y-2 border-l-2 border-teal-500 pl-3 py-1">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-teal-400 text-xs uppercase tracking-wide">Phase 3: Earthquake Correlation</span>
-            <button id="btn-goto-phase3" class="text-[11px] text-teal-300 hover:text-teal-200 bg-teal-950/60 px-2 py-0.5 rounded border border-teal-800">Focus Phase 3</button>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            1. Turn on the <strong>Earthquakes Layer</strong>.<br>
-            2. Notice where deep or high-magnitude earthquakes occur. Do they align with subduction zones or transform faults (e.g., San Andreas)?<br>
-            3. Synthesis: Why do volcanoes and earthquakes occur together in specific geographic belts?
-          </p>
-        </div>
-
-        <!-- Student Quick-Note Box (Canvas State / Reflection Helper) -->
-        <div class="pt-2 border-t border-slate-800 space-y-2">
-          <label for="student-notes" class="font-semibold text-slate-300 text-xs block">
-            <i class="fa-solid fa-pen-to-square text-indigo-400 mr-1"></i> Student Reflection Notes:
-          </label>
-          <textarea id="student-notes" rows="4" placeholder="Type your observation summary here before submitting your Canvas response..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-y"></textarea>
-          <p class="text-[10px] text-slate-500 italic">Notes are retained during this active session for easy copying into Canvas assignments.</p>
-        </div>
-
-      </div>
-
-      <!-- Drawer Footer -->
-      <div class="p-3 border-t border-slate-800 bg-slate-950/80 text-center text-xs text-slate-500">
-        NGSS Standard: HS-ESS1-5 & HS-ESS2-1 (Plate Tectonics)
-      </div>
-    </aside>
-
-  </div>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
-  <!-- Main Earth Science Map Logic -->
-  <script>
-    // ==========================================
-    // DATASETS: Volcanoes & Earthquakes
-    // ==========================================
-
-    // Curated Dataset of Major Representative Global Volcanoes
-    const VOLCANOES_DATA = [
-      { name: "Mount Fuji", lat: 35.3606, lng: 138.7274, type: "Stratovolcano", region: "Japan (Pacific Ring of Fire)", tectonic: "Convergent (Subduction Zone)", active: "Active", elevation: "3,776 m", status: "Iconic stratovolcano created by Pacific plate subducting under Philippine/Eurasian plates." },
-      { name: "Kilauea & Mauna Loa", lat: 19.421, lng: -155.287, type: "Shield Volcano", region: "Hawaiian Islands", tectonic: "Intraplate Hotspot", active: "Extremely Active", elevation: "1,247 m", status: "Shield volcano created by tectonic plate drifting over mantle plume." },
-      { name: "Eyjafjallajökull", lat: 63.63, lng: -19.62, type: "Stratovolcano", region: "Iceland", tectonic: "Divergent (Mid-Atlantic Ridge + Hotspot)", active: "Active", elevation: "1,651 m", status: "Located directly on the Mid-Atlantic Ridge where North American & Eurasian plates spread." },
-      { name: "Mount St. Helens", lat: 46.1914, lng: -122.1956, type: "Stratovolcano", region: "Cascade Range, USA", tectonic: "Convergent (Cascadia Subduction)", active: "Active", elevation: "2,549 m", status: "Formed by Juan de Fuca plate subducting beneath the North American plate." },
-      { name: "Krakatoa (Anak Krakatau)", lat: -6.102, lng: 105.423, type: "Caldera / Stratovolcano", region: "Sunda Strait, Indonesia", tectonic: "Convergent (Indo-Australian subduction)", active: "Highly Active", elevation: "155 m", status: "Famous explosive volcano at subduction boundary." },
-      { name: "Mount Vesuvius", lat: 40.821, lng: 14.426, type: "Complex Stratovolcano", region: "Italy (Mediterranean)", tectonic: "Convergent (African-Eurasian Collision)", active: "Active", elevation: "1,281 m", status: "Formed by subduction of African plate beneath Eurasian plate." },
-      { name: "Mount Pinatubo", lat: 15.143, lng: 120.35, type: "Stratovolcano", region: "Philippines", tectonic: "Convergent (Philippine Sea Plate Subduction)", active: "Active", elevation: "1,486 m", status: "Site of massive 1991 explosive eruption." },
-      { name: "Popocatépetl", lat: 19.023, lng: -98.622, type: "Stratovolcano", region: "Mexico (Trans-Mexican Volcanic Belt)", active: "Active", tectonic: "Convergent (Cocos Plate Subduction)", elevation: "5,426 m", status: "Major active volcano along Middle America Trench subduction zone." },
-      { name: "Cotopaxi", lat: -0.677, lng: -78.436, type: "Stratovolcano", region: "Ecuador (Andes)", tectonic: "Convergent (Nazca Plate Subduction)", active: "Active", elevation: "5,897 m", status: "High Andean stratovolcano produced by subduction of Nazca plate." },
-      { name: "Nyiragongo", lat: -1.52, lng: 29.25, type: "Stratovolcano (Fluid Lava)", region: "Democratic Republic of Congo", tectonic: "Divergent (East African Rift)", active: "Active", elevation: "3,470 m", status: "Continental rift volcano containing a permanent lava lake." },
-      { name: "Mount Rainier", lat: 46.852, lng: -121.760, type: "Stratovolcano", region: "Washington, USA", tectonic: "Convergent (Cascadia Subduction Zone)", active: "Active", elevation: "4,392 m", status: "Potentially dangerous Cascade volcano near Seattle metropolitan area." },
-      { name: "Taupo Volcano", lat: -38.80, lng: 176.00, type: "Supervolcano / Caldera", region: "North Island, New Zealand", tectonic: "Convergent (Pacific Plate Subduction)", active: "Active", elevation: "356 m", status: "Large rhyolitic caldera formed in Pacific subduction zone." },
-      { name: "Nevado del Ruiz", lat: 4.892, lng: -75.324, type: "Stratovolcano", region: "Colombia", tectonic: "Convergent (Nazca Subduction)", active: "Active", elevation: "5,321 m", status: "Glacier-covered active volcano along Andean volcanic arc." },
-      { name: "Erta Ale", lat: 13.60, lng: 40.67, type: "Shield Volcano", region: "Afar Depression, Ethiopia", tectonic: "Divergent (Triple Junction Rift)", active: "Active", elevation: "613 m", status: "Continuously active basaltic shield volcano in East African continental rift." },
-      { name: "Yasur", lat: -19.53, lng: 169.44, type: "Stratovolcano", region: "Tanna Island, Vanuatu", tectonic: "Convergent (Indo-Australian/Pacific Subduction)", active: "Continuously Active", elevation: "361 m", status: "Famous accessible continuously erupting volcano in SW Pacific." }
-    ];
-
-    // Major Global Recent Representative Earthquakes Dataset
-    const RECENT_EARTHQUAKES = [
-      { name: "Tōhoku, Japan", lat: 38.297, lng: 142.373, mag: 9.1, depth: "29 km", date: "2011-03-11", type: "Megathrust Subduction" },
-      { name: "Valdivia, Chile", lat: -38.29, lng: -73.05, mag: 9.5, depth: "33 km", date: "1960-05-22", type: "Megathrust Subduction" },
-      { name: "Kahramanmaraş, Turkey", lat: 37.174, lng: 37.032, mag: 7.8, depth: "10 km", date: "2023-02-06", type: "Transform (East Anatolian Fault)" },
-      { name: "Sumatra-Andaman", lat: 3.316, lng: 95.854, mag: 9.1, depth: "30 km", date: "2004-12-26", type: "Megathrust Subduction" },
-      { name: "Anchorage, Alaska", lat: 61.02, lng: -147.65, mag: 9.2, depth: "25 km", date: "1964-03-27", type: "Megathrust Subduction" },
-      { name: "Haiti (Port-au-Prince)", lat: 18.457, lng: -72.533, mag: 7.0, depth: "13 km", date: "2010-01-12", type: "Transform Fault" },
-      { name: "San Francisco, USA", lat: 37.75, lng: -122.55, mag: 7.9, depth: "12 km", date: "1906-04-18", type: "Transform (San Andreas Fault)" },
-      { name: "Christchurch, NZ", lat: -43.58, lng: 172.68, mag: 6.3, depth: "5 km", date: "2011-02-22", type: "Oblique Strike-Slip" },
-      { name: "Kaikoura, New Zealand", lat: -42.69, lng: 173.02, mag: 7.8, depth: "15 km", date: "2016-11-13", type: "Complex Faulting" },
-      { name: "Sichuan, China", lat: 30.986, lng: 103.364, mag: 7.9, depth: "19 km", date: "2008-05-12", type: "Thrust Fault" },
-      { name: "Noto Peninsula, Japan", lat: 37.5, lng: 137.2, mag: 7.5, depth: "10 km", date: "2024-01-01", type: "Reverse Faulting" },
-      { name: "Ridgecrest, California", lat: 35.77, lng: -117.59, mag: 7.1, depth: "8 km", date: "2019-07-05", type: "Strike-Slip Faulting" },
-      { name: "Hualien, Taiwan", lat: 23.77, lng: 121.67, mag: 7.4, depth: "34 km", date: "2024-04-03", type: "Subduction Reverse Fault" }
-    ];
-
-    // ==========================================
-    // INITIALIZE LEAFLET MAP & TILE LAYERS
-    // ==========================================
-
-    const tileLayers = {
-      dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 18
-      }),
-      imagery: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri',
-        maxZoom: 18
-      }),
-      topo: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri',
-        maxZoom: 18
-      })
-    };
-
-    const map = L.map('map', {
-      center: [20, 10],
-      zoom: 2.5,
-      minZoom: 2,
-      maxZoom: 12,
-      layers: [tileLayers.topo],
-      zoomControl: false
-    });
-
-    L.control.zoom({ position: 'topright' }).addTo(map);
-<!-- ... existing code -->
+    <!-- Header Navigation Bar -->
+    <header class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex-none z-20 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- App Title & Subtitle -->
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-5
